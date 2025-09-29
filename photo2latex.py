@@ -10,6 +10,9 @@ from tkinter import filedialog
 
 
 def open_folder(path):
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+
     if platform.system() == "Windows":
         os.startfile(path)
     elif platform.system() == "Darwin":  # macOS
@@ -114,14 +117,23 @@ def main(photo_path, title, output_folder="./output"):
     open_folder(output_folder)
 
 def gui():
-    def start_button_event(name:str, photo_path:str, output_var, root):
+    def start_button_event(name:str, photo_path:str, output_path:str, output_var, root):
         try:
-            main(photo_path=photo_path, title=name)
+            main(photo_path=photo_path, title=name, output_folder=output_path)
             output = "Successfull generated your Latex / PDF / Ebook"
         except Exception as e:
             output = f"Error occured: {e}"
         output_var.set(f"Output:\n{output}")
         update_size(root)
+
+    
+    def show_warning(root, msg="⚠️ This folder will be cleared!", row=4, column=2, columnspan=2, pady=5):
+        # create a warning label
+        warning_label = ttk.Label(main_window, text=msg, foreground="red")
+        warning_label.grid(row=row, column=column, columnspan=columnspan, pady=pady)
+
+        # remove it after 3 seconds
+        root.after(3000, warning_label.destroy)
 
     def update_size(root):
         root.minsize(0, 0)
@@ -149,11 +161,11 @@ def gui():
         justify="center",
         padding=10
     )
-    header.grid(row=0, column=0, columnspan=4, sticky="nsew", pady=(10, 20))
+    header.grid(row=0, column=0, columnspan=5, sticky="nsew", pady=(10, 20))
 
     # get title
     input_label = ttk.Label(main_window, text="Title:")
-    input_label.grid(row=1, column=1, sticky="nswe", pady=10, padx=20)
+    input_label.grid(row=1, column=1, sticky="e", pady=10, padx=20)
 
     user_input = tk.StringVar()
     input_entry = ttk.Entry(main_window, textvariable=user_input)
@@ -163,6 +175,7 @@ def gui():
     # search photo folder
     def enable_button():
         run_button["state"] = "normal"
+        directory_button_open["state"] = "normal"
 
     selected_directory = tk.StringVar()
     
@@ -173,29 +186,56 @@ def gui():
             enable_button()
 
     browse_button = ttk.Button(main_window, text="Browse Directory", command=browse_directory)
-    browse_button.grid(row=2, column=1, columnspan=1, pady=10)
+    browse_button.grid(row=2, column=1, columnspan=1, sticky="es", pady=10)
 
     directory_display = ttk.Label(main_window, textvariable=selected_directory)
-    directory_display.grid(row=2, column=2, columnspan=1, pady=5)
+    directory_display.grid(row=2, column=2, columnspan=1, sticky="s", pady=13)
+
+    directory_button_open = ttk.Button(main_window, text="Open", command=lambda:open_folder(path=selected_directory.get()))
+    directory_button_open.grid(row=2, column=3, columnspan=1, sticky="ws", pady=10)
+    directory_button_open["state"] = "disabled"
+
+    # output directoy
+    selected_directory_output = tk.StringVar()
+    selected_directory_output.set(os.path.abspath("./output"))
+
+    def browse_directory_output():
+        path = filedialog.askdirectory()
+        if path:
+            selected_directory_output.set(path)
+            show_warning(root=root, msg="⚠️ This folder will be cleared!", row=3, column=2, columnspan=2, pady=(18, 13))
+
+    browse_button = ttk.Button(main_window, text="Browse Output Directory", command=browse_directory_output)
+    browse_button.grid(row=3, column=1, columnspan=1, sticky="en", pady=10)
+
+    directory_display_output = ttk.Label(main_window, textvariable=selected_directory_output)
+    directory_display_output.grid(row=3, column=2, columnspan=1, sticky="n", pady=13)
+
+    directory_button_open_output = ttk.Button(main_window, text="Open", command=lambda:open_folder(path=selected_directory_output.get()))
+    directory_button_open_output.grid(row=3, column=3, columnspan=1, sticky="wn", pady=10)
 
     # run button and output label
     output_var = tk.StringVar()
     output_var.set("Output:")
     output_label = ttk.Label(main_window, textvariable=output_var, borderwidth=2)
-    output_label.grid(row=4, rowspan=2, column=1, columnspan=2, sticky="nswe", pady=10, padx=20)
+    output_label.grid(row=5, rowspan=2, column=1, columnspan=2, sticky="nswe", pady=10, padx=20)
 
-    run_button = ttk.Button(main_window, text="Run", command=lambda: start_button_event(user_input.get(), selected_directory.get(), output_var, root), takefocus=0)
-    run_button.grid(row=3, column=1, columnspan=2, sticky="nswe", ipady=10, padx=20)
+    run_button = ttk.Button(main_window, text="Run", command=lambda: start_button_event(user_input.get(), 
+                                                                                        selected_directory.get(), 
+                                                                                        selected_directory_output.get(), 
+                                                                                        output_var, 
+                                                                                        root), takefocus=0)
+    run_button.grid(row=4, column=1, columnspan=3, sticky="nswe", ipady=10, padx=20)
     run_button["state"] = "disabled"
 
     # set weights for resizable
-    for i in range(6):
+    for i in range(7):
         main_window.grid_rowconfigure(i, weight=1)
-    for i in range(4):
+    for i in range(5):
         main_window.grid_columnconfigure(i, weight=1)
 
     update_size(root)
-    root.geometry("600x400")
+    root.geometry("800x600")
     root.mainloop()
 
 
