@@ -5,7 +5,7 @@ Python program to automatically create a time ordered photo album as latex docum
 
 ### Installation
 
-1. Install Anaconda -> https://github.com/xXAI-botXx/Project-Helper?tab=readme-ov-file#anaconda
+1. Install Anaconda -> https://github.com/M-106/Project-Helper?tab=readme-ov-file#anaconda
 2. Run in anaconda shell: 
     ```anaconda
     conda create -n p2l python=3.12 pip -y
